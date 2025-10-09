@@ -1,6 +1,7 @@
 import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
+import ResumeRoutes from "./Routes/ResumeRoutes.js"
 import RecruiterRoutes from "./Routes/RecruiterRoutes.js"
 dotenv.config();
 
@@ -24,6 +25,7 @@ app.get("/", (req, res) => {
   res.send("API is running and database is connected!");
 });
 app.use("/recruiter",RecruiterRoutes);
+app.use("/resume",ResumeRoutes);
 
 const PORT = process.env.PORT || 5000;
 
