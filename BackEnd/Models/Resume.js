@@ -11,7 +11,8 @@ const ResumeSchema = new Schema({
     education: { type: String },
     experience: { type: String },
     totalExperience: { type: Number,default:0},
-    uploadDate: { type: Date, default: Date.now }
+    uploadDate: { type: Date, default: Date.now },
+    pdfUrl:{type:String}
 });
 
 export default mongoose.model("Resume", ResumeSchema);

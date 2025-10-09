@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-
+const {Schema}=mongoose;
 const Comparisons=new mongoose.Schema({
     groupId:{
         type: Schema.Types.ObjectId,ref:"Groups"

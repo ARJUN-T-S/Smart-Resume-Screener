@@ -4,10 +4,13 @@ import dotenv from "dotenv";
 import ResumeRoutes from "./Routes/ResumeRoutes.js"
 import RecruiterRoutes from "./Routes/RecruiterRoutes.js"
 import GroupRoutes from "./Routes/GroupRoutes.js"
+import JobDescripotions from "./Routes/JobDescriptions.js"
+import Comparisons from "./Routes/ComparisonRoutes.js"
 dotenv.config();
 
 const app = express();
-app.use(express.json());
+app.use(express.json()); // This is crucial for parsing JSON bodies
+app.use(express.urlencoded({ extended: true }))
 
 // Step 1: Connect to MongoDB
 mongoose
@@ -28,6 +31,8 @@ app.get("/", (req, res) => {
 app.use("/recruiter",RecruiterRoutes);
 app.use("/resume",ResumeRoutes);
 app.use("/groups",GroupRoutes);
+app.use("/job-desc",JobDescripotions);
+app.use("/comparison",Comparisons);
 const PORT = process.env.PORT || 5000;
 
 // Step 3: Start server

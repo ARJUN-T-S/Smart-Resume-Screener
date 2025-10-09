@@ -11,6 +11,7 @@ const JobDescriptions=new mongoose.Schema({
     location:{
         type:String
     },
+    jdUrl:{type:String},
     createdAt:{type:Date,default:Date.now}
 })
 
