@@ -1,6 +1,7 @@
-import { TextAnalyticsClient, AzureKeyCredential } from "@azure/ai-language-text";
 import dotenv from "dotenv";
 dotenv.config();
+
+import { TextAnalyticsClient, AzureKeyCredential } from "@azure/ai-text-analytics";
 
 const languageClient = new TextAnalyticsClient(
   process.env.AZURE_LANGUAGE_ENDPOINT,

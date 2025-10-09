@@ -40,8 +40,12 @@ const extractFieldsFromText = async (text) => {
   }
 
   // 3️⃣ Regex for total experience (years)
-  const expMatch = text.match(/(\d+(\.\d+)?)\s*(years|yrs)/i);
-  if (expMatch) candidate.totalExperience = parseFloat(expMatch[1]);
+let totalExp = 0;
+
+const expMatch = text.match(/(\d+(\.\d+)?)\s*(years|yrs)/i);
+if (expMatch) totalExp = parseFloat(expMatch[1]);
+
+candidate.totalExperience = totalExp; 
 
   // 4️⃣ Key Phrase extraction for skills
   const keyPhraseResult = await languageClient.extractKeyPhrases([text]);

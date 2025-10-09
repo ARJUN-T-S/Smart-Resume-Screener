@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import ResumeRoutes from "./Routes/ResumeRoutes.js"
 import RecruiterRoutes from "./Routes/RecruiterRoutes.js"
+import GroupRoutes from "./Routes/GroupRoutes.js"
 dotenv.config();
 
 const app = express();
@@ -26,7 +27,7 @@ app.get("/", (req, res) => {
 });
 app.use("/recruiter",RecruiterRoutes);
 app.use("/resume",ResumeRoutes);
-
+app.use("/groups",GroupRoutes);
 const PORT = process.env.PORT || 5000;
 
 // Step 3: Start server

@@ -1,5 +1,5 @@
 import { documentClient } from "../Config/AzureDoc.js";
-import { TextMapping } from "../Utils/TextMapping.js";
+import { extractFieldsFromText } from "../Utils/TextMapping.js";
 import Resume from "../Models/Resume.js";
 
 const extractAndSaveResume = async (req, res) => {
@@ -18,7 +18,7 @@ const extractAndSaveResume = async (req, res) => {
     extractedText = extractedText.trim();
 
     // 2️⃣ Extract structured fields
-    const fields = await TextMapping(extractedText);
+    const fields = await extractFieldsFromText(extractedText);
 
     // 3️⃣ Save to MongoDB
     const resumeDoc = new Resume({

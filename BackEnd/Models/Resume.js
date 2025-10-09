@@ -10,7 +10,7 @@ const ResumeSchema = new Schema({
     skills: [{ type: String }],
     education: { type: String },
     experience: { type: String },
-    totalExperience: { type: Number },
+    totalExperience: { type: Number,default:0},
     uploadDate: { type: Date, default: Date.now }
 });
 
