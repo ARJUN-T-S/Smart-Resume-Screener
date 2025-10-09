@@ -1,76 +1,46 @@
 import { documentClient } from "../Config/AzureDoc.js";
+import { TextMapping } from "../Utils/TextMapping.js";
+import Resume from "../Models/Resume.js";
 
-/**
- * Extract text from a PDF using Azure Form Recognizer
- */
-const extractTextFromPDF = async (req, res) => {
+const extractAndSaveResume = async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        error: 'No PDF file uploaded. Please upload with field name "pdf".',
-      });
-    }
+    if (!req.file) return res.status(400).json({ success: false, error: "No PDF uploaded" });
 
-    console.log(`📄 Processing file: ${req.file.originalname}`);
-
-    // Convert file buffer to stream
+    // 1️⃣ Extract raw text using Document Intelligence
     const buffer = req.file.buffer;
-
-    // Start analyzing with prebuilt-read model
     const poller = await documentClient.beginAnalyzeDocument("prebuilt-read", buffer);
     const result = await poller.pollUntilDone();
 
-    // Extract text from pages
     let extractedText = "";
-    if (result.pages && result.pages.length > 0) {
-      for (const page of result.pages) {
-        if (page.lines) {
-          for (const line of page.lines) {
-            extractedText += line.content + "\n";
-          }
-        }
-        extractedText += "\n--- Page Break ---\n\n";
-      }
-    }
-
-    extractedText = extractedText.trim() || "No text could be extracted. The file may be image-only or encrypted.";
-
-    console.log(`✅ Extracted ${extractedText.length} characters`);
-
-    // Send response
-    res.json({
-      success: true,
-      fileName: req.file.originalname,
-      pageCount: result.pages?.length || 0,
-      characterCount: extractedText.length,
-      text: extractedText,
-      modelUsed: "prebuilt-read",
-      timestamp: new Date().toISOString(),
+    result.pages.forEach((page) => {
+      page.lines.forEach((line) => extractedText += line.content + "\n");
     });
+    extractedText = extractedText.trim();
+
+    // 2️⃣ Extract structured fields
+    const fields = await TextMapping(extractedText);
+
+    // 3️⃣ Save to MongoDB
+    const resumeDoc = new Resume({
+      groupId: req.body.groupId,
+      recruiterId: req.userId,
+      candidateName: fields.candidateName,
+      email: fields.email,
+      extractedText,
+      skills: fields.skills,
+      education: fields.education,
+      experience: fields.experience,
+      totalExperience: fields.totalExperience,
+    });
+
+    await resumeDoc.save();
+
+    res.json({ success: true, data: resumeDoc });
 
   } catch (error) {
-    console.error("❌ Error extracting text:", error.message);
-    res.status(500).json({
-      success: false,
-      error: "Failed to extract text from PDF.",
-      message: error.message,
-    });
+    console.error(error);
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 
-/**
- * Health check endpoint
- */
-const healthCheck = (req, res) => {
-  res.json({
-    success: true,
-    service: "Azure PDF Text Extraction",
-    status: "Operational",
-    model: "prebuilt-read",
-    azureConfigured: Boolean(process.env.FORM_RECOGNIZER_ENDPOINT && process.env.FORM_RECOGNIZER_KEY),
-    timestamp: new Date().toISOString(),
-  });
-};
-
-export { extractTextFromPDF, healthCheck };
+export { extractAndSaveResume };

@@ -1,9 +1,10 @@
 import express from "express";
-import { extractTextFromPDF, healthCheck } from "../Controllers/ResumeContent.js";
+import {extractAndSaveResume } from "../Controllers/ResumeContent.js";
 import { upload, handleMulterError } from "../Middlewares/MulterMiddleware.js";
+import AuthMiddleware from "../Middlewares/Auth.js";
 
 const router = express.Router();
 
-router.post("/extract-text", upload.single("pdf"), handleMulterError, extractTextFromPDF);
+router.post("/extract-text",AuthMiddleware.Auth,upload.single("pdf"), handleMulterError, extractAndSaveResume);
 
 export default router;
