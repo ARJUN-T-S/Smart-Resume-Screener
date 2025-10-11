@@ -1,10 +1,9 @@
 import mongoose from "mongoose";
 
-const Groups=new mongoose.Schema({
-    groupName:{type:String,required:true},
-    userId:{
-        type:String,ref:"Recruiters"
-    }
-})
+const GroupsSchema = new mongoose.Schema({
+  groupName: { type: String, required: true },
+  userId: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+});
 
-export default mongoose.model("Groups",Groups)
+export default mongoose.model("Groups", GroupsSchema);

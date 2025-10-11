@@ -3,6 +3,37 @@ import JobDescriptions from "../Models/JobDescriptions.js";
 import { extractFieldsFromJD } from "../Utils/TextMappingForJD.js";
 import { uploadPdfToCloudinary } from "../Utils/CloudUtil.js";  // 🟢 Added import
 
+const getAllJDs = async (req, res) => {
+  try {
+    const recruiterId = req.userId;
+
+    // Fetch all job descriptions for this recruiter
+    const jobDescriptions = await JobDescriptions.find({ recruiterId }).sort({ createdAt: -1 });
+
+    if (!jobDescriptions || jobDescriptions.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No job descriptions found for this recruiter.",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Job descriptions retrieved successfully.",
+      total: jobDescriptions.length,
+      data: jobDescriptions,
+    });
+  } catch (error) {
+    console.error("Get JD Error:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
+
+
 const extractAndSaveJD = async (req, res) => {
   try {
     if (!req.file)
@@ -55,4 +86,4 @@ const extractAndSaveJD = async (req, res) => {
   }
 };
 
-export { extractAndSaveJD };
+export { extractAndSaveJD,getAllJDs };

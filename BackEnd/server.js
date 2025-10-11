@@ -6,12 +6,13 @@ import RecruiterRoutes from "./Routes/RecruiterRoutes.js"
 import GroupRoutes from "./Routes/GroupRoutes.js"
 import JobDescripotions from "./Routes/JobDescriptions.js"
 import Comparisons from "./Routes/ComparisonRoutes.js"
+import cors from 'cors'
 dotenv.config();
 
 const app = express();
 app.use(express.json()); // This is crucial for parsing JSON bodies
 app.use(express.urlencoded({ extended: true }))
-
+app.use(cors());
 // Step 1: Connect to MongoDB
 mongoose
   .connect(process.env.MONGO_URI, {

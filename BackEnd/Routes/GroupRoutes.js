@@ -10,6 +10,6 @@ router.post("/add",AuthMiddleware.Auth,addGroup);
 router.delete("/remove/:id",AuthMiddleware.Auth,removeGroup);
 
 // Get all groups for a specific user
-router.get("/user/:userId",AuthMiddleware.Auth,getGroups);
+router.get("/",AuthMiddleware.Auth,getGroups);
 
 export default router;
