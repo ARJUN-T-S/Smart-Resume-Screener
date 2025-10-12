@@ -6,6 +6,8 @@ import Landing from './Pages/Landing';
 import GroupPage from './Pages/GroupPage';
 import JobDescription from './Pages/JobDescription';
 import ResumeData from "./Pages/ResumeData.jsx";
+import Comparisons from "./Pages/Comparisons.jsx";
+import CompareInduvidually from "./Pages/CompareInduvidually.jsx";
 function App() {
   console.log("✅ App Loaded");
 
@@ -19,6 +21,8 @@ function App() {
           <Route path ="landing" element={<Landing/>}/>
           <Route path="/job-description" element={<JobDescription/>}/>
           <Route path="/resume-data" element={<ResumeData/>}/>
+          <Route path="/comparison" element={<Comparisons/>}/>
+          <Route path="/compareInduvidually" element={<CompareInduvidually/>}/>
         </Routes>
       </Router>
     </div>

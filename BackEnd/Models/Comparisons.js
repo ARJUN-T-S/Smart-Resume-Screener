@@ -7,7 +7,7 @@ const Comparisons=new mongoose.Schema({
     recruiterId:{
         type:String,ref:"Recruiters"
     },
-    resumeId:{type: Schema.Types.ObjectId,ref:"Resumes"},
+    resumeId:{type: Schema.Types.ObjectId,ref:"Resume"},
     jobId:{
         type: Schema.Types.ObjectId,ref:"JobDescriptions"
     },

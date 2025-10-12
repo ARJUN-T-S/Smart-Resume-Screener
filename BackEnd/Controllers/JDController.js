@@ -5,6 +5,60 @@ import { uploadPdfToCloudinary } from "../Utils/CloudUtil.js";  // 🟢 Added im
 import Comparisons from "../Models/Comparisons.js";
 import mongoose from "mongoose";
 
+const getJobDescById= async (req, res) => {
+    try {
+      const userId = req.userId;
+      const { jdId } = req.params;
+
+      // ✅ Check if user is authenticated
+      if (!userId) {
+        return res
+          .status(401)
+          .json({ success: false, message: "Unauthorized: user not identified" });
+      }
+
+      // ✅ Check if jdId is provided
+      if (!jdId) {
+        return res
+          .status(400)
+          .json({ success: false, message: "jdId is required" });
+      }
+
+      // ✅ Validate jdId format
+      if (!mongoose.Types.ObjectId.isValid(jdId)) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid jdId format" });
+      }
+
+      // ✅ Find the job description that belongs to the recruiter
+      const jobDesc = await JobDescriptions.findOne({
+        _id: jdId,
+        recruiterId: userId,
+      });
+
+      // ✅ Handle not found
+      if (!jobDesc) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Job description not found" });
+      }
+
+      // ✅ Success
+      return res.status(200).json({
+        success: true,
+        message: "Job description fetched successfully",
+        data: jobDesc,
+      });
+    } catch (err) {
+      console.error("Error in getJobDescById:", err);
+      return res.status(500).json({
+        success: false,
+        message: "Internal server error",
+        error: err.message,
+      });
+    }
+  }
 
 const getAllJDs = async (req, res) => {
   try {
@@ -89,4 +143,4 @@ const extractAndSaveJD = async (req, res) => {
   }
 };
 
-export { extractAndSaveJD,getAllJDs};
+export { extractAndSaveJD,getAllJDs,getJobDescById};
