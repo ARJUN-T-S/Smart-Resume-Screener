@@ -151,7 +151,7 @@ const GroupPage = () => {
         formData.append('pdf', file);
         formData.append('groupId', group._id);
 
-        const response = await fetch(import.meta.env.VITE_API_BASE_URL+'/resume/extract-text', {
+        const response = await fetch('https://smart-resume-screener-r6s0.onrender.com/resume/extract-text', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${idToken}`,

@@ -34,13 +34,13 @@ const Comparisons = () => {
 
       switch (viewMode) {
         case 'top-match':
-          url = import.meta.env.VITE_API_BASE_URL+`/other/top-match/${groupId}/${jdId}/${limitValue}`;
+          url = `https://smart-resume-screener-r6s0.onrender.com/other/top-match/${groupId}/${jdId}/${limitValue}`;
           break;
         case 'top-skills':
-          url = import.meta.env.VITE_API_BASE_URL+`/other/top-skills/${groupId}/${jdId}/${limitValue}`;
+          url = `https://smart-resume-screener-r6s0.onrender.com/other/top-skills/${groupId}/${jdId}/${limitValue}`;
           break;
         default:
-          url = import.meta.env.VITE_API_BASE_URL+`/other/${groupId}/${jdId}`;
+          url = `https://smart-resume-screener-r6s0.onrender.com/other/${groupId}/${jdId}`;
       }
 
       console.log('Making request to:', url);

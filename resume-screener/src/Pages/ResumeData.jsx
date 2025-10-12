@@ -29,7 +29,7 @@ const ResumeData = () => {
         console.log('Current resume ID:', resume._id);
 
         // Use the correct endpoint: /other/getGroupsForJd/:groupId
-        const comparisonsResponse = await fetch(import.meta.env.VITE_API_BASE_URL+`/other/getGroupsForJd/${resume.groupId}`, {
+        const comparisonsResponse = await fetch(`https://smart-resume-screener-r6s0.onrender.com/other/getGroupsForJd/${resume.groupId}`, {
           headers: {
             'Authorization': `Bearer ${idToken}`,
           },
@@ -117,7 +117,7 @@ const ResumeData = () => {
     try {
       console.log('Fetching job details for:', jobComparison.jobId);
       
-      const response = await fetch(import.meta.env.VITE_API_BASE_URL+`/job-desc/${jobComparison.jobId}`, {
+      const response = await fetch(`https://smart-resume-screener-r6s0.onrender.com/job-desc/${jobComparison.jobId}`, {
         headers: {
           'Authorization': `Bearer ${idToken}`,
         },

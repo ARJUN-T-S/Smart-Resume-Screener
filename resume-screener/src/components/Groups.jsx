@@ -15,7 +15,7 @@ const Groups = () => {
   const fetchGroups = async () => {
     try {
       setLoading(true);
-      const response = await fetch(import.meta.env.VITE_API_BASE_URL+'/groups/', {
+      const response = await fetch('https://smart-resume-screener-r6s0.onrender.com/groups/', {
         headers: {
           'Authorization': `Bearer ${idToken}`,
         },
@@ -44,7 +44,7 @@ const Groups = () => {
 
     try {
       setSubmitting(true);
-      const response = await fetch(import.meta.env.VITE_API_BASE_URL+'/groups/add', {
+      const response = await fetch('https://smart-resume-screener-r6s0.onrender.com/groups/add', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
