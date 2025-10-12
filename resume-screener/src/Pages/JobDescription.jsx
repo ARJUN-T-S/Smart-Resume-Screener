@@ -23,7 +23,7 @@ const JobDescriptions = () => {
   const fetchJobDescriptions = async () => {
     try {
       setLoading(true);
-      const response = await fetch(import.meta.env.VITE_API_BASE_URL+'/job-desc/', {
+      const response = await fetch('https://smart-resume-screener-r6s0.onrender.com/job-desc/', {
         headers: {
           'Authorization': `Bearer ${idToken}`,
         },
