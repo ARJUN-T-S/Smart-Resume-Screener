@@ -18,7 +18,7 @@ const JobDescriptions = () => {
   const fetchJobDescriptions = async () => {
     try {
       setLoading(true);
-      const response = await fetch('import.meta.env.VITE_VAPI_URL+'/job-desc/', {
+      const response = await fetch(import.meta.env.VITE_VAPI_URL+'/job-desc/', {
         headers: {
           'Authorization': `Bearer ${idToken}`,
         },
