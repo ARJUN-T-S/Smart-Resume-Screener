@@ -3,6 +3,57 @@ import { extractFieldsFromText } from "../Utils/TextMapping.js";
 import Resume from "../Models/Resume.js";
 import { uploadPdfToCloudinary } from "../Utils/CloudUtil.js";
 
+import mongoose from "mongoose";
+
+const getAllResumes = async (req, res) => {
+  try {
+    const userId = req.userId; // recruiterId from auth middleware
+    const { groupId } = req.params; // sent as /resumes/:groupId
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized: recruiter not identified",
+      });
+    }
+
+    if (!groupId) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing groupId parameter",
+      });
+    }
+
+    // Fetch all resumes in this group belonging to the recruiter
+    const resumes = await Resume.find({
+      recruiterId: userId,
+      groupId: new mongoose.Types.ObjectId(groupId),
+    });
+
+    if (!resumes.length) {
+      return res.status(404).json({
+        success: false,
+        message: "No resumes found for this group",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Resumes fetched successfully",
+      data: resumes,
+    });
+  } catch (error) {
+    console.error("Error fetching resumes:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+
+
 const extractAndSaveResume = async (req, res) => {
   try {
     if (!req.file)
@@ -53,4 +104,4 @@ const extractAndSaveResume = async (req, res) => {
   }
 };
 
-export { extractAndSaveResume };
+export { extractAndSaveResume,getAllResumes };

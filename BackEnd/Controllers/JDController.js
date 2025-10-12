@@ -3,6 +3,53 @@ import JobDescriptions from "../Models/JobDescriptions.js";
 import { extractFieldsFromJD } from "../Utils/TextMappingForJD.js";
 import { uploadPdfToCloudinary } from "../Utils/CloudUtil.js";  // 🟢 Added import
 
+const getJobDescById = async (req, res) => {
+  try {
+    const userId = req.userId; // from Auth middleware
+    const { jdId } = req.params;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized: user not identified",
+      });
+    }
+
+    if (!jdId) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing job description ID",
+      });
+    }
+
+    // Find the JD record for this user
+    const jobDesc = await Comparisons.findOne({
+      userId: userId,
+      jobId: new mongoose.Types.ObjectId(jdId),
+    });
+
+    if (!jobDesc) {
+      return res.status(404).json({
+        success: false,
+        message: "Job description not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Job description fetched successfully",
+      data: jobDesc,
+    });
+  } catch (error) {
+    console.error("Error fetching job description:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
 const getAllJDs = async (req, res) => {
   try {
     const recruiterId = req.userId;
@@ -86,4 +133,4 @@ const extractAndSaveJD = async (req, res) => {
   }
 };
 
-export { extractAndSaveJD,getAllJDs };
+export { extractAndSaveJD,getAllJDs,getJobDescById };
