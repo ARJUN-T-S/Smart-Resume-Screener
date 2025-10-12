@@ -15,7 +15,7 @@ const Groups = () => {
   const fetchGroups = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/groups/', {
+      const response = await fetch('${import.meta.env.VITE_API_URL}/groups/', {
         headers: {
           'Authorization': `Bearer ${idToken}`,
         },
@@ -44,7 +44,7 @@ const Groups = () => {
 
     try {
       setSubmitting(true);
-      const response = await fetch('http://localhost:5000/groups/add', {
+      const response = await fetch('${import.meta.env.VITE_API_URL}/groups/add', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

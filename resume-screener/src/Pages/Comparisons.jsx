@@ -34,13 +34,13 @@ const Comparisons = () => {
 
       switch (viewMode) {
         case 'top-match':
-          url = `http://localhost:5000/other/top-match/${groupId}/${jdId}/${limitValue}`;
+          url = `${import.meta.env.VITE_API_URL}/other/top-match/${groupId}/${jdId}/${limitValue}`;
           break;
         case 'top-skills':
-          url = `http://localhost:5000/other/top-skills/${groupId}/${jdId}/${limitValue}`;
+          url = `${import.meta.env.VITE_API_URL}/other/top-skills/${groupId}/${jdId}/${limitValue}`;
           break;
         default:
-          url = `http://localhost:5000/other/${groupId}/${jdId}`;
+          url = `${import.meta.env.VITE_API_URL}/other/${groupId}/${jdId}`;
       }
 
       console.log('Making request to:', url);
