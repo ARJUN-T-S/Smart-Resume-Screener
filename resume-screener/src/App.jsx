@@ -5,6 +5,7 @@ import Auth from "./Pages/Auth.jsx"
 import Landing from './Pages/Landing';
 import GroupPage from './Pages/GroupPage';
 import JobDescription from './Pages/JobDescription';
+import ResumeData from "./Pages/ResumeData.jsx";
 function App() {
   console.log("✅ App Loaded");
 
@@ -17,6 +18,7 @@ function App() {
           <Route path="/group" element={<GroupPage/>}/>
           <Route path ="landing" element={<Landing/>}/>
           <Route path="/job-description" element={<JobDescription/>}/>
+          <Route path="/resume-data" element={<ResumeData/>}/>
         </Routes>
       </Router>
     </div>

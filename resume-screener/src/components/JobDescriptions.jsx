@@ -9,6 +9,8 @@ const JobDescriptions = () => {
   const [file, setFile] = useState(null);
   const [fileName, setFileName] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [comparedGroups, setComparedGroups] = useState({});
+  const [loadingGroups, setLoadingGroups] = useState({});
   const { idToken } = useSelector((state) => state.auth);
   const navigate = useNavigate();
 
@@ -27,6 +29,7 @@ const JobDescriptions = () => {
       }
 
       const result = await response.json();
+      console.log(result.data);
       if (result.success) {
         setJobDescriptions(result.data || []);
       }
@@ -35,6 +38,40 @@ const JobDescriptions = () => {
       alert('Failed to load job descriptions');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Fetch compared groups for a specific job description
+  const fetchComparedGroups = async (jobId) => {
+    try {
+      setLoadingGroups(prev => ({ ...prev, [jobId]: true }));
+      console.log(jobId);
+      const response = await fetch(`http://localhost:5000/other/group/${jobId}`, {
+        headers: {
+          'Authorization': `Bearer ${idToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch compared groups');
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        
+        setComparedGroups(prev => ({
+          ...prev,
+          [jobId]: result.data || []
+        }));
+      }
+    } catch (error) {
+      console.error(`Error fetching compared groups for job ${jobId}:`, error);
+      setComparedGroups(prev => ({
+        ...prev,
+        [jobId]: []
+      }));
+    } finally {
+      setLoadingGroups(prev => ({ ...prev, [jobId]: false }));
     }
   };
 
@@ -107,6 +144,31 @@ const JobDescriptions = () => {
   // Handle JD click - pass data via state
   const handleJDClick = (jd) => {
     navigate('/job-description', { state: { jobDescription: jd } });
+  };
+
+  // Handle view compared groups
+  const handleViewComparedGroups = (jd, groupId) => {
+    navigate('/comparison', { 
+      state: { 
+        groupId: groupId,
+        jdId: jd._id,
+        jobDescription: jd
+      } 
+    });
+  };
+
+  // Toggle compared groups visibility
+  const toggleComparedGroups = (jd) => {
+    const jobId = jd._id;
+    if (comparedGroups[jobId] === undefined) {
+      fetchComparedGroups(jobId);
+    } else {
+      setComparedGroups(prev => {
+        const newState = { ...prev };
+        delete newState[jobId];
+        return newState;
+      });
+    }
   };
 
   useEffect(() => {
@@ -209,45 +271,106 @@ const JobDescriptions = () => {
           <p className="text-blue-200">No job descriptions found. Upload your first JD!</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {jobDescriptions.map((jd) => (
-            <div
-              key={jd._id}
-              onClick={() => handleJDClick(jd)}
-              className="p-4 bg-white/5 border border-white/20 rounded-lg hover:border-green-400 hover:bg-white/10 cursor-pointer transition-colors"
-            >
-              <h3 className="font-medium text-white">{jd.title || 'Untitled JD'}</h3>
-              <p className="text-sm text-blue-200">
-                {jd.companyName && `${jd.companyName} • `}
-                {jd.location}
-              </p>
-              {jd.requriedSkills && jd.requriedSkills.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-1">
-                  {jd.requriedSkills.slice(0, 3).map((skill, index) => (
-                    <span
-                      key={index}
-                      className="px-2 py-1 bg-white/10 text-blue-200 text-xs rounded"
-                    >
-                      {skill}
+            <div key={jd._id} className="bg-white/5 border border-white/20 rounded-lg overflow-hidden">
+              {/* JD Main Info */}
+              <div
+                onClick={() => handleJDClick(jd)}
+                className="p-4 hover:border-green-400 hover:bg-white/10 cursor-pointer transition-colors"
+              >
+                <h3 className="font-medium text-white">{jd.title || 'Untitled JD'}</h3>
+                <p className="text-sm text-blue-200">
+                  {jd.companyName && `${jd.companyName} • `}
+                  {jd.location}
+                </p>
+                {jd.requriedSkills && jd.requriedSkills.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {jd.requriedSkills.slice(0, 3).map((skill, index) => (
+                      <span
+                        key={index}
+                        className="px-2 py-1 bg-white/10 text-blue-200 text-xs rounded"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                    {jd.requriedSkills.length > 3 && (
+                      <span className="px-2 py-1 bg-white/10 text-blue-200 text-xs rounded">
+                        +{jd.requriedSkills.length - 3} more
+                      </span>
+                    )}
+                  </div>
+                )}
+                {jd.jdUrl && (
+                  <div className="mt-2">
+                    <span className="inline-flex items-center px-2 py-1 bg-blue-500/20 text-blue-300 text-xs rounded">
+                      <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      PDF Available
                     </span>
-                  ))}
-                  {jd.requriedSkills.length > 3 && (
-                    <span className="px-2 py-1 bg-white/10 text-blue-200 text-xs rounded">
-                      +{jd.requriedSkills.length - 3} more
-                    </span>
-                  )}
-                </div>
-              )}
-              {jd.jdUrl && (
-                <div className="mt-2">
-                  <span className="inline-flex items-center px-2 py-1 bg-blue-500/20 text-blue-300 text-xs rounded">
-                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    PDF Available
+                  </div>
+                )}
+              </div>
+
+              {/* Compared Groups Section */}
+              <div className="border-t border-white/20">
+                <button
+                  onClick={() => toggleComparedGroups(jd)}
+                  className="w-full p-3 text-left hover:bg-white/5 transition-colors flex items-center justify-between"
+                >
+                  <span className="text-blue-200 text-sm font-medium">
+                    Compared Groups ({comparedGroups[jd._id]?.length || 0})
                   </span>
-                </div>
-              )}
+                  <svg 
+                    className={`w-4 h-4 text-blue-200 transition-transform ${
+                      comparedGroups[jd._id] ? 'rotate-180' : ''
+                    }`} 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {comparedGroups[jd._id] && (
+                  <div className="p-3 bg-white/5 border-t border-white/10">
+                    {loadingGroups[jd._id] ? (
+                      <div className="text-center py-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-400 mx-auto"></div>
+                        <p className="text-blue-200 text-xs mt-1">Loading groups...</p>
+                      </div>
+                    ) : comparedGroups[jd._id].length === 0 ? (
+                      <p className="text-blue-200 text-sm text-center py-2">
+                        No groups compared yet
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {comparedGroups[jd._id].map((group, index) => (
+                          <div
+                            key={group.groupId || index}
+                            className="flex items-center justify-between p-2 bg-white/5 rounded border border-white/10 hover:border-purple-400 cursor-pointer transition-colors"
+                            onClick={() => handleViewComparedGroups(jd, group.groupId)}
+                          >
+                            <div>
+                              <p className="text-white text-sm font-medium">
+                                Group ID: {group.groupId}
+                              </p>
+                              <p className="text-blue-200 text-xs">
+                                Click to view comparisons
+                              </p>
+                            </div>
+                            <svg className="w-4 h-4 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           ))}
         </div>

@@ -12,7 +12,6 @@ router.post("/generate", ComparisonsController.generateComparisons);
 
 // Get all comparisons for a group
 router.get("/group/:groupId", ComparisonsController.getComparisonsByGroup);
-
 // Get specific comparison by ID
 router.get("/:id", ComparisonsController.getComparisonById);
 

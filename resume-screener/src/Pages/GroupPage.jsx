@@ -44,11 +44,11 @@ const GroupPage = () => {
     }
   };
 
-  // Fetch job descriptions for comparison
+  // Fetch job descriptions for comparison - CORRECTED ENDPOINT
   const fetchJobDescriptions = async () => {
     try {
       setLoadingJds(true);
-      const response = await fetch(`http://localhost:5000/job-desc/getGroupsForJd/${group._id}`, {
+      const response = await fetch(`http://localhost:5000/other/getGroupsForJd/${group._id}`, {
         headers: {
           'Authorization': `Bearer ${idToken}`,
         },
@@ -71,25 +71,36 @@ const GroupPage = () => {
     }
   };
 
-  // Fetch details for each job description
+  // Fetch details for each job description - CORRECTED ENDPOINT
   const fetchJdDetails = async (jds) => {
     const details = {};
-    for (const jd of jds) {
+    
+    // Get all unique job IDs from the comparisons
+    const jobIds = [...new Set(jds.map(jd => jd.jobId))];
+    
+    for (const jobId of jobIds) {
       try {
-        const response = await fetch(`http://localhost:5000/job-desc/${jd.jobId}`, {
+        const response = await fetch(`http://localhost:5000/job-desc/`, {
           headers: {
             'Authorization': `Bearer ${idToken}`,
           },
         });
-
+        
         if (response.ok) {
           const result = await response.json();
-          if (result.success) {
-            details[jd.jobId] = result.data;
+          if (result.success && result.data) {
+            // Find the specific job description by ID
+            const jdDetail = Array.isArray(result.data) 
+              ? result.data.find(jd => jd._id === jobId)
+              : result.data;
+            
+            if (jdDetail) {
+              details[jobId] = jdDetail;
+            }
           }
         }
       } catch (error) {
-        console.error(`Error fetching JD details for ${jd.jobId}:`, error);
+        console.error(`Error fetching JD details for ${jobId}:`, error);
       }
     }
     setJdDetails(details);
@@ -138,7 +149,7 @@ const GroupPage = () => {
 
         const formData = new FormData();
         formData.append('pdf', file);
-formData.append('groupId', group._id);
+        formData.append('groupId', group._id);
 
         const response = await fetch('http://localhost:5000/resume/extract-text', {
           method: 'POST',
@@ -219,6 +230,8 @@ formData.append('groupId', group._id);
     const jdDetail = jdDetails[jd.jobId];
     if (jdDetail) {
       navigate('/job-description', { state: { jobDescription: jdDetail } });
+    } else {
+      alert('Job description details not available');
     }
   };
 
@@ -296,14 +309,12 @@ formData.append('groupId', group._id);
               <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-xl font-semibold text-white">Resumes</h2>
-                  {resumes.length === 0 && (
-                    <button
-                      onClick={() => setShowUploadForm(true)}
-                      className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-                    >
-                      Upload Resumes
-                    </button>
-                  )}
+                  <button
+                    onClick={() => setShowUploadForm(true)}
+                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    Upload Resumes
+                  </button>
                 </div>
 
                 {/* Upload Form */}
@@ -408,12 +419,14 @@ formData.append('groupId', group._id);
                 ) : resumes.length === 0 ? (
                   <div className="text-center py-8">
                     <p className="text-blue-200 mb-4">No resumes found in this group.</p>
-                    <button
-                      onClick={() => setShowUploadForm(true)}
-                      className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-                    >
-                      Upload Your First Resumes
-                    </button>
+                    {!showUploadForm && (
+                      <button
+                        onClick={() => setShowUploadForm(true)}
+                        className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                      >
+                        Upload Your First Resumes
+                      </button>
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -509,12 +522,6 @@ formData.append('groupId', group._id);
                                   <h3 className="font-medium text-white">
                                     {jdDetail?.title || 'Job Description'}
                                   </h3>
-                                  <p className="text-sm text-blue-200">
-                                    Match Score: <span className="text-green-300">{jd.matchScore}%</span>
-                                  </p>
-                                  <p className="text-sm text-blue-200">
-                                    Skill Overlap: <span className="text-yellow-300">{jd.SkillOverLap}%</span>
-                                  </p>
                                   {jdDetail?.companyName && (
                                     <p className="text-xs text-blue-300 mt-1">
                                       Company: {jdDetail.companyName}
@@ -530,39 +537,6 @@ formData.append('groupId', group._id);
                               Show Comparisons
                             </button>
                           </div>
-                          
-                          {jd.Justification && (
-                            <div className="mt-3 p-3 bg-white/5 rounded-lg">
-                              <p className="text-sm text-blue-200">
-                                <strong>Justification:</strong> {jd.Justification}
-                              </p>
-                            </div>
-                          )}
-                          
-                          {(jd.pros?.length > 0 || jd.cons?.length > 0) && (
-                            <div className="mt-3 grid grid-cols-2 gap-3">
-                              {jd.pros?.length > 0 && (
-                                <div>
-                                  <h4 className="text-sm font-medium text-green-300 mb-1">Pros</h4>
-                                  <ul className="text-xs text-blue-200 space-y-1">
-                                    {jd.pros.slice(0, 2).map((pro, index) => (
-                                      <li key={index}>• {pro}</li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-                              {jd.cons?.length > 0 && (
-                                <div>
-                                  <h4 className="text-sm font-medium text-red-300 mb-1">Cons</h4>
-                                  <ul className="text-xs text-blue-200 space-y-1">
-                                    {jd.cons.slice(0, 2).map((con, index) => (
-                                      <li key={index}>• {con}</li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-                            </div>
-                          )}
                         </div>
                       );
                     })}
