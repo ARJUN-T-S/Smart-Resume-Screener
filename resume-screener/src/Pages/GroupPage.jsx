@@ -22,7 +22,7 @@ const GroupPage = () => {
   const fetchResumes = async () => {
     try {
       setLoading(true);
-      const response = await fetch(import.meta.env.VITE_API_BASE_URL+`/resume/getAllResumesForGroups/${group._id}`, {
+      const response = await fetch(`https://smart-resume-screener-r6s0.onrender.com/resume/getAllResumesForGroups/${group._id}`, {
         headers: {
           'Authorization': `Bearer ${idToken}`,
         },
