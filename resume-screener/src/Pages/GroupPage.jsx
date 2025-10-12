@@ -22,7 +22,7 @@ const GroupPage = () => {
   const fetchResumes = async () => {
     try {
       setLoading(true);
-      const response = await fetch(import.meta.env.VITE_VAPI_URL+`/resume/getAllResumesForGroups/${group._id}`, {
+      const response = await fetch(import.meta.env.VITE_API_BASE_URL+`/resume/getAllResumesForGroups/${group._id}`, {
         headers: {
           'Authorization': `Bearer ${idToken}`,
         },
@@ -48,7 +48,7 @@ const GroupPage = () => {
   const fetchJobDescriptions = async () => {
     try {
       setLoadingJds(true);
-      const response = await fetch(import.meta.env.VITE_VAPI_URL+`/other/getGroupsForJd/${group._id}`, {
+      const response = await fetch(import.meta.env.VITE_API_BASE_URL+`/other/getGroupsForJd/${group._id}`, {
         headers: {
           'Authorization': `Bearer ${idToken}`,
         },
@@ -80,7 +80,7 @@ const GroupPage = () => {
     
     for (const jobId of jobIds) {
       try {
-        const response = await fetch(import.meta.env.VITE_VAPI_URL+`/job-desc/`, {
+        const response = await fetch(import.meta.env.VITE_API_BASE_URL+`/job-desc/`, {
           headers: {
             'Authorization': `Bearer ${idToken}`,
           },
@@ -151,7 +151,7 @@ const GroupPage = () => {
         formData.append('pdf', file);
         formData.append('groupId', group._id);
 
-        const response = await fetch(import.meta.env.VITE_VAPI_URL+'/resume/extract-text', {
+        const response = await fetch(import.meta.env.VITE_API_BASE_URL+'/resume/extract-text', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${idToken}`,

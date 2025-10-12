@@ -20,7 +20,7 @@ const Auth = () => {
   const dispatch = useDispatch();
   const googleProvider = new GoogleAuthProvider();
 
-  const API_BASE_URL = import.meta.env.VITE_API_URL;
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   // Make API call to backend with Bearer token only
   const makeApiCall = async (endpoint, method = 'POST', idToken = null) => {
