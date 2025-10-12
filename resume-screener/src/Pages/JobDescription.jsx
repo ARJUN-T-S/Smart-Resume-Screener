@@ -23,7 +23,7 @@ const JobDescriptions = () => {
   const fetchJobDescriptions = async () => {
     try {
       setLoading(true);
-      const response = await fetch('${import.meta.env.VITE_API_URL}/job-desc/', {
+      const response = await fetch(import.meta.env.VITE_VAPI_URL+'/job-desc/', {
         headers: {
           'Authorization': `Bearer ${idToken}`,
         },
@@ -54,7 +54,7 @@ const JobDescriptions = () => {
   // Fetch all groups to get group names
   const fetchAllGroups = async () => {
     try {
-      const response = await fetch('${import.meta.env.VITE_API_URL}/groups/', {
+      const response = await fetch(import.meta.env.VITE_VAPI_URL+'/groups/', {
         headers: {
           'Authorization': `Bearer ${idToken}`,
         },
@@ -80,7 +80,7 @@ const JobDescriptions = () => {
     try {
       setLoadingGroups(prev => ({ ...prev, [jobId]: true }));
       
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/other/group/${jobId}`, {
+      const response = await fetch(import.meta.env.VITE_VAPI_URL+`/other/group/${jobId}`, {
         headers: {
           'Authorization': `Bearer ${idToken}`,
         },
@@ -144,7 +144,7 @@ const JobDescriptions = () => {
       const formData = new FormData();
       formData.append('pdf', file);
 
-      const response = await fetch('${import.meta.env.VITE_API_URL}/job-desc/postJD', {
+      const response = await fetch(import.meta.env.VITE_VAPI_URL+'/job-desc/postJD', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${idToken}`,
@@ -208,7 +208,7 @@ const JobDescriptions = () => {
 
     try {
       setComparing(true);
-      const response = await fetch('${import.meta.env.VITE_API_URL}/comparison/generate', {
+      const response = await fetch(import.meta.env.VITE_VAPI_URL+'/comparison/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

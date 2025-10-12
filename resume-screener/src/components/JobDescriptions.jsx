@@ -18,7 +18,7 @@ const JobDescriptions = () => {
   const fetchJobDescriptions = async () => {
     try {
       setLoading(true);
-      const response = await fetch('${import.meta.env.VITE_API_URL}/job-desc/', {
+      const response = await fetch('import.meta.env.VITE_VAPI_URL+'/job-desc/', {
         headers: {
           'Authorization': `Bearer ${idToken}`,
         },
@@ -46,7 +46,7 @@ const JobDescriptions = () => {
     try {
       setLoadingGroups(prev => ({ ...prev, [jobId]: true }));
       console.log(jobId);
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/other/group/${jobId}`, {
+      const response = await fetch(import.meta.env.VITE_VAPI_URL+`/other/group/${jobId}`, {
         headers: {
           'Authorization': `Bearer ${idToken}`,
         },
@@ -106,7 +106,7 @@ const JobDescriptions = () => {
 
       console.log('Uploading PDF file:', file.name, 'with field name: pdf');
 
-      const response = await fetch('${import.meta.env.VITE_API_URL}/job-desc/postJD', {
+      const response = await fetch(import.meta.env.VITE_VAPI_URL+'/job-desc/postJD', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${idToken}`,
