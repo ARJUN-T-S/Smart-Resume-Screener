@@ -5,7 +5,8 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   signInWithPopup,
-  GoogleAuthProvider 
+  GoogleAuthProvider,
+  updateProfile 
 } from 'firebase/auth';
 import { auth } from '../fireabse/config';
 import { setIdToken, setUser } from '../store/authSlice';
@@ -16,6 +17,8 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showNameModal, setShowNameModal] = useState(false);
+  const [googleUserData, setGoogleUserData] = useState(null);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const googleProvider = new GoogleAuthProvider();
@@ -23,7 +26,7 @@ const Auth = () => {
   const API_BASE_URL = 'https://smart-resume-screener-r6s0.onrender.com';
 
   // Make API call to backend with Bearer token only
-  const makeApiCall = async (endpoint, method = 'POST', idToken = null) => {
+  const makeApiCall = async (endpoint, method = 'POST', idToken = null, body = null) => {
     const headers = {
       'Content-Type': 'application/json',
     };
@@ -36,6 +39,11 @@ const Auth = () => {
       method,
       headers,
     };
+
+    // Add body for POST requests
+    if (body && (method === 'POST' || method === 'PUT')) {
+      config.body = JSON.stringify(body);
+    }
 
     try {
       console.log(`Making ${method} request to: ${API_BASE_URL}${endpoint}`);
@@ -63,11 +71,11 @@ const Auth = () => {
   };
 
   // Handle successful authentication
-  const handleSuccessfulAuth = (userCredential, idToken, name = '') => {
+  const handleSuccessfulAuth = (userCredential, idToken, userName = '') => {
     const userData = {
       uid: userCredential.user.uid,
       email: userCredential.user.email,
-      displayName: userCredential.user.displayName || name,
+      displayName: userCredential.user.displayName || userName,
     };
     
     dispatch(setIdToken(idToken));
@@ -114,12 +122,28 @@ const Auth = () => {
         userCredential = await createUserWithEmailAndPassword(auth, email, password);
         console.log('Firebase account created successfully');
 
+        // Update profile with name
+        if (name) {
+          await updateProfile(userCredential.user, {
+            displayName: name
+          });
+        }
+
         // Get the ID token
         const idToken = await userCredential.user.getIdToken();
         console.log('Firebase ID Token:', idToken);
 
         // For signup: Use POST /recruiter/postRecruiter to create recruiter in DB
-        const apiResponse = await makeApiCall('/recruiter/postRecruiter', 'POST', idToken);
+        // Send name and email in the request body as your backend expects
+        const apiResponse = await makeApiCall(
+          '/recruiter/postRecruiter', 
+          'POST', 
+          idToken, 
+          {
+            name: name || userCredential.user.displayName,
+            email: userCredential.user.email
+          }
+        );
         console.log('Signup API response:', apiResponse);
 
         handleSuccessfulAuth(userCredential, idToken, name);
@@ -157,8 +181,25 @@ const Auth = () => {
       console.log('Firebase ID Token:', idToken);
 
       if (isSignUp) {
-        // For Google signup: Use POST /recruiter/postRecruiter
-        const apiResponse = await makeApiCall('/recruiter/postRecruiter', 'POST', idToken);
+        // Check if user has a name from Google
+        if (!userCredential.user.displayName) {
+          // Store user data and show name modal
+          setGoogleUserData({ userCredential, idToken });
+          setShowNameModal(true);
+          setLoading(false);
+          return;
+        }
+
+        // For Google signup: Use POST /recruiter/postRecruiter with name and email
+        const apiResponse = await makeApiCall(
+          '/recruiter/postRecruiter', 
+          'POST', 
+          idToken, 
+          {
+            name: userCredential.user.displayName,
+            email: userCredential.user.email
+          }
+        );
         console.log('Google signup API response:', apiResponse);
       } else {
         // For Google login: Use GET /recruiter to verify user
@@ -184,7 +225,41 @@ const Auth = () => {
       } else {
         alert(error.message);
       }
-    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle Google signup with custom name
+  const handleGoogleSignupWithName = async (userName) => {
+    setLoading(true);
+    
+    try {
+      const { userCredential, idToken } = googleUserData;
+
+      // Update profile with the provided name
+      if (userName) {
+        await updateProfile(userCredential.user, {
+          displayName: userName
+        });
+      }
+
+      // Create recruiter in backend with the provided name
+      const apiResponse = await makeApiCall(
+        '/recruiter/postRecruiter', 
+        'POST', 
+        idToken, 
+        {
+          name: userName,
+          email: userCredential.user.email
+        }
+      );
+      console.log('Google signup with name API response:', apiResponse);
+
+      handleSuccessfulAuth(userCredential, idToken, userName);
+      
+    } catch (error) {
+      console.error('Google signup with name error:', error);
+      alert(error.message);
       setLoading(false);
     }
   };
@@ -202,6 +277,45 @@ const Auth = () => {
       <div className="absolute top-1/4 right-1/4 text-white opacity-20 text-6xl">📄</div>
       <div className="absolute bottom-1/3 left-1/4 text-white opacity-20 text-6xl">🔍</div>
       <div className="absolute top-1/3 left-1/2 text-white opacity-20 text-6xl">💼</div>
+
+      {/* Name Modal for Google Signup */}
+      {showNameModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-8 w-full max-w-md mx-4">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Complete Your Profile</h2>
+            <p className="text-gray-600 mb-6">Please provide your name to complete the signup process.</p>
+            
+            <input
+              type="text"
+              placeholder="Full Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-500 focus:outline-none focus:border-blue-400 focus:bg-white transition-colors mb-6"
+              required
+            />
+            
+            <div className="flex space-x-4">
+              <button
+                onClick={() => {
+                  setShowNameModal(false);
+                  setGoogleUserData(null);
+                  setLoading(false);
+                }}
+                className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-400 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleGoogleSignupWithName(name)}
+                disabled={!name}
+                className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Complete Signup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 w-full max-w-md mx-4 border border-white/20 shadow-2xl">
         <div className="text-center mb-8">

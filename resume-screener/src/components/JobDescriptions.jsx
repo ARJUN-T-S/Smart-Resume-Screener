@@ -35,7 +35,7 @@ const JobDescriptions = () => {
       }
     } catch (error) {
       console.error('Error fetching job descriptions:', error);
-      alert('Failed to load job descriptions');
+      
     } finally {
       setLoading(false);
     }

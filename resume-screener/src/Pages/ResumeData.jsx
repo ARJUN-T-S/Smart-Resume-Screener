@@ -147,7 +147,7 @@ const ResumeData = () => {
       }
     } catch (err) {
       console.error('Error fetching job details:', err);
-      alert('Error loading job details: ' + err.message);
+      
     }
   };
 

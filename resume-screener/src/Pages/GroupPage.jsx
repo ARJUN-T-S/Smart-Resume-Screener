@@ -38,7 +38,7 @@ const GroupPage = () => {
       }
     } catch (error) {
       console.error('Error fetching resumes:', error);
-      alert('Failed to load resumes');
+      
     } finally {
       setLoading(false);
     }
@@ -230,9 +230,7 @@ const GroupPage = () => {
     const jdDetail = jdDetails[jd.jobId];
     if (jdDetail) {
       navigate('/job-description', { state: { jobDescription: jdDetail } });
-    } else {
-      alert('Job description details not available');
-    }
+    } 
   };
 
   // Handle show comparisons
