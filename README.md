@@ -1,67 +1,130 @@
 # 🧠 Smart Resume Screener
 
-An AI-powered application that analyzes resumes, extracts structured data, and semantically compares them with job descriptions using HuggingFace embeddings and Azure AI Services.
+---
+
+## 1️⃣ Project Overview
+
+The **Smart Resume Screener** is an **AI-powered web application** that automatically parses resumes, extracts key information such as **skills** and **experience**, and matches them with a given job description using a **Large Language Model (LLM)**.  
+The system then generates a **match score** along with a **justification** for each candidate, helping recruiters shortlist applicants efficiently.
 
 ---
 
-## 📘 Table of Contents
-1. [Overview](#overview)
-2. [Key Features](#key-features)
-3. [System Architecture](#system-architecture)
-4. [Document Processing Pipeline](#document-processing-pipeline)
-5. [LLM Integration](#llm-integration)
-6. [Tech Stack](#tech-stack)
-7. [API Endpoints](#api-endpoints)
-8. [Deployment Links](#deployment-links)
-9. [Demo Video](#demo-video)
-10. [Installation Guide](#installation-guide)
-11. [Future Enhancements](#future-enhancements)
-12. [Author](#author)
+## 2️⃣ LLM PROMPTS
 
----
+### a) Prompt
 
-## 🧩 Overview
+```javascript
+const prepareResumeText = (resume) => {
+  return `
+    Professional Profile: ${resume.candidateName} with
+${resume.totalExperience} years of experience.
+    Technical Skills: ${resume.skills.join(", ")}.
+    Professional Experience: ${resume.experience}.
+    Educational Background: ${resume.education}.
+    Key Competencies: ${resume.skills.join(", ")}. ${resume.experience}.
+  `.replace(/\s+/g, ' ').trim();
+};
+b) Prompt Explanation
+The prepareResumeText() function converts structured resume data (like name, skills, experience, and education) into a clean, natural-language paragraph.
+This makes the text more understandable for the HuggingFace model.
+The generated text is then passed to the sentence-transformers/all-MiniLM-L6-v2 model, which transforms it into a semantic embedding — a numerical vector that represents the meaning of the resume.
+These embeddings are later compared with job description embeddings using cosine similarity to calculate how closely a candidate’s profile matches the job requirements.
 
-**Smart Resume Screener** intelligently parses PDF or text-based resumes, extracts key fields such as skills, education, and experience, and compares them against job descriptions using AI models.  
-The system generates a **semantic similarity score** and a **justification report**, helping recruiters shortlist the most relevant candidates efficiently.
+3️⃣ System Architecture
+Frontend Layer
+React + Vite – Modern build tooling
 
----
+Tailwind CSS – Utility-first styling
 
-## 🚀 Key Features
+Redux Toolkit – State management
 
-- 📄 Automated resume parsing via **Azure Document Intelligence**
-- 🧠 Semantic similarity scoring using **HuggingFace sentence embeddings**
-- ⚙️ Backend API for handling resume and job uploads
-- 💾 MongoDB for structured data storage
-- 🔐 Firebase Authentication for user access
-- 💻 Responsive frontend built with **React + Tailwind CSS**
-- ☁️ Cloud-based deployment (Frontend + Backend)
+React Router – Navigation
 
----
+Firebase Auth – User authentication
 
-## ⚙️ System Architecture
+Backend Layer
+Node.js + Express – API server
 
-### **Frontend Layer**
-- **React + Vite** – Modern build tooling  
-- **Tailwind CSS** – Utility-first styling  
-- **Redux Toolkit** – State management  
-- **React Router** – Navigation  
-- **Firebase Auth** – User authentication  
+MongoDB + Mongoose – Database & ODM
 
-### **Backend Layer**
-- **Node.js + Express** – API server  
-- **MongoDB + Mongoose** – Database & ODM  
-- **Firebase Admin SDK** – Backend auth  
-- **JWT Tokens** – Secure API communication  
+Firebase Admin SDK – Backend authentication
 
-### **AI Services Layer**
-- **HuggingFace** – Sentence embeddings  
-- **Azure AI Services** – Document processing  
-- **Cloudinary** – PDF storage & delivery  
+JWT Tokens – Secure API communication
 
----
+AI Services Layer
+HuggingFace – Sentence embeddings
 
-## 🧾 Document Processing Pipeline
+Azure AI Services – Document processing
 
-```text
-PDF Upload → Azure Document Intelligence → Field Mapping → Database Storage
+Cloudinary – PDF storage & delivery
+
+4️⃣ Data Flow Pipeline
+Document Processing Pipeline
+PDF Upload → Cloudinary Storage
+
+Text Extraction → Azure Document Intelligence
+
+Field Mapping → Azure Language Service (NER)
+
+Database Storage → MongoDB Collections
+
+AI Comparison Pipeline
+Text Preparation → Structured formatting
+
+Embedding Generation → HuggingFace API
+
+Similarity Calculation → Cosine similarity
+
+Analysis Generation → Multi-factor scoring
+
+5️⃣ HuggingFace LLM Pipeline
+Model: sentence-transformers/all-MiniLM-L6-v2
+
+Why This Model is Efficient
+Lightweight (6 transformer layers)
+
+Fast (~10,000 sentences/sec)
+
+Accurate and cost-effective
+
+Ideal for resume–JD similarity tasks
+
+6️⃣ API Endpoints Summary
+Resume Management
+POST /resume/upload
+
+GET /resume/getAllResumesForGroups/:groupId
+
+Job Description Management
+POST /job-desc/upload
+
+GET /job-desc/
+
+GET /job-desc/:jdId
+
+AI Comparisons
+POST /comparison/generate
+
+GET /other/:groupId/:jobId
+
+GET /other/top-match/:groupId/:jobId/:limit
+
+Groups Management
+POST /groups/addGroup
+
+GET /groups/getGroups
+
+DELETE /groups/:id
+
+📦 Technologies Used
+Layer	Technologies
+Frontend	React, Vite, Tailwind CSS, Redux Toolkit, Firebase Auth
+Backend	Node.js, Express.js
+Database	MongoDB
+Cloud Services	Cloudinary, Azure AI Services
+LLM	HuggingFace Sentence Transformers
+Authentication	Firebase Admin SDK, JWT
+
+👨‍💻 Author
+Name: Arjun Sivakumar
+Reg. No: 22BCE0507
