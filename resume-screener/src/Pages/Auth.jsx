@@ -17,6 +17,7 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [showNameModal, setShowNameModal] = useState(false);
   const [googleUserData, setGoogleUserData] = useState(null);
   const navigate = useNavigate();
@@ -25,7 +26,7 @@ const Auth = () => {
 
   const API_BASE_URL = 'https://smart-resume-screener-r6s0.onrender.com';
 
-  // Make API call to backend with Bearer token only
+  // Make API call to backend with Bearer token
   const makeApiCall = async (endpoint, method = 'POST', idToken = null, body = null) => {
     const headers = {
       'Content-Type': 'application/json',
@@ -40,7 +41,6 @@ const Auth = () => {
       headers,
     };
 
-    // Add body for POST requests
     if (body && (method === 'POST' || method === 'PUT')) {
       config.body = JSON.stringify(body);
     }
@@ -50,11 +50,12 @@ const Auth = () => {
 
       const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
       
-      // Check if response is HTML (error page)
+      // Check if response is JSON
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
-        await response.text();
-        throw new Error(`Server returned HTML instead of JSON. Status: ${response.status}`);
+        const textResponse = await response.text();
+        console.error('Non-JSON response:', textResponse);
+        throw new Error(`Server error: ${response.status}`);
       }
       
       const result = await response.json();
@@ -92,33 +93,48 @@ const Auth = () => {
   const handleEmailAuth = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
+    
+    // Validation
+    if (!email || !password) {
+      setError('Please fill in all fields');
+      setLoading(false);
+      return;
+    }
+
+    if (!isLogin && !name) {
+      setError('Please enter your name');
+      setLoading(false);
+      return;
+    }
     
     try {
       let userCredential;
       
       if (isLogin) {
-        // Login with email/password
+        // LOGIN: Send email and password to Firebase
+        console.log('Attempting login with:', { email, password });
         userCredential = await signInWithEmailAndPassword(auth, email, password);
         console.log('Firebase sign in successful');
 
         // Get the ID token
         const idToken = await userCredential.user.getIdToken();
-        console.log('Firebase ID Token:', idToken);
+        console.log('Firebase ID Token received');
 
-        // For login: Use GET /recruiter to verify user exists and get details
+        // Verify user exists in backend
         try {
-          const apiResponse = await makeApiCall('/recruiter', 'GET', idToken);
-          console.log('Login API response:', apiResponse);
+          await makeApiCall('/recruiter', 'GET', idToken);
+          console.log('User verified in backend');
         } catch (apiError) {
-          // If GET /recruiter fails with 404, user might not exist in DB yet
-          // But we'll still allow login since Firebase auth succeeded
-          console.log('User might not exist in DB yet, but Firebase auth succeeded',apiError);
+          console.log('User might not exist in DB yet, but Firebase auth succeeded'+apiError);
+          // Continue with login since Firebase auth worked
         }
 
         handleSuccessfulAuth(userCredential, idToken);
 
       } else {
-        // Sign up with email/password
+        // SIGNUP: First create Firebase account with email and password
+        console.log('Attempting signup with:', { email, password, name });
         userCredential = await createUserWithEmailAndPassword(auth, email, password);
         console.log('Firebase account created successfully');
 
@@ -127,21 +143,22 @@ const Auth = () => {
           await updateProfile(userCredential.user, {
             displayName: name
           });
+          console.log('Profile updated with name:', name);
         }
 
         // Get the ID token
         const idToken = await userCredential.user.getIdToken();
-        console.log('Firebase ID Token:', idToken);
+        console.log('Firebase ID Token received');
 
-        // For signup: Use POST /recruiter/postRecruiter to create recruiter in DB
-        // Send name and email in the request body as your backend expects
+        // Create user in backend with name and email
+        console.log('Creating user in backend...');
         const apiResponse = await makeApiCall(
           '/recruiter/postRecruiter', 
           'POST', 
           idToken, 
           {
-            name: name || userCredential.user.displayName,
-            email: userCredential.user.email
+            name: name,
+            email: email
           }
         );
         console.log('Signup API response:', apiResponse);
@@ -150,38 +167,27 @@ const Auth = () => {
       }
 
     } catch (error) {
-      console.error('Authentication error:', error.message);
-      
-      // Show user-friendly error message
-      if (error.message.includes('HTML instead of JSON')) {
-        alert('Backend server error. Please try again or contact support.');
-      } else if (error.message.includes('invalid-email')) {
-        alert('Please enter a valid email address.');
-      } else if (error.message.includes('user-not-found') || error.message.includes('wrong-password')) {
-        alert('Invalid email or password.');
-      } else if (error.message.includes('email-already-in-use')) {
-        alert('An account with this email already exists. Please login instead.');
-      } else {
-        alert(error.message);
-      }
+      console.error('Authentication error:', error);
+      setError(getUserFriendlyError(error));
     } finally {
       setLoading(false);
     }
   };
 
   // Handle Google authentication
-  const handleGoogleAuth = async (isSignUp = false) => {
+  const handleGoogleAuth = async () => {
     setLoading(true);
+    setError('');
     
     try {
       const userCredential = await signInWithPopup(auth, googleProvider);
       console.log('Google authentication successful');
       
       const idToken = await userCredential.user.getIdToken();
-      console.log('Firebase ID Token:', idToken);
+      console.log('Firebase ID Token received');
 
-      if (isSignUp) {
-        // Check if user has a name from Google
+      if (!isLogin) {
+        // GOOGLE SIGNUP: Check if user has a name from Google
         if (!userCredential.user.displayName) {
           // Store user data and show name modal
           setGoogleUserData({ userCredential, idToken });
@@ -190,7 +196,8 @@ const Auth = () => {
           return;
         }
 
-        // For Google signup: Use POST /recruiter/postRecruiter with name and email
+        // For Google signup: Create user in backend with Google profile data
+        console.log('Creating Google user in backend...');
         const apiResponse = await makeApiCall(
           '/recruiter/postRecruiter', 
           'POST', 
@@ -202,28 +209,26 @@ const Auth = () => {
         );
         console.log('Google signup API response:', apiResponse);
       } else {
-        // For Google login: Use GET /recruiter to verify user
+        // GOOGLE LOGIN: Verify user exists in backend
         try {
-          const apiResponse = await makeApiCall('/recruiter', 'GET', idToken);
-          console.log('Google login API response:', apiResponse);
+          await makeApiCall('/recruiter', 'GET', idToken);
+          console.log('Google user verified in backend');
         } catch (apiError) {
-          // If GET /recruiter fails, user might not exist in DB yet
-          console.log('Google user might not exist in DB yet, but Firebase auth succeeded',apiError);
+          console.log('Google user might not exist in DB yet, but Firebase auth succeeded'+apiError);
+          // Continue with login since Firebase auth worked
         }
       }
 
       handleSuccessfulAuth(userCredential, idToken);
 
     } catch (error) {
-      console.error('Google authentication error:', error.message);
+      console.error('Google authentication error:', error);
       
-      if (error.message.includes('popup-closed-by-user')) {
-        // User closed the Google popup, no need to show error
+      if (error.code === 'auth/popup-closed-by-user') {
+        // User closed the popup, no need to show error
         console.log('Google sign-in cancelled by user');
-      } else if (error.message.includes('HTML instead of JSON')) {
-        alert('Backend server error. Please try again or contact support.');
       } else {
-        alert(error.message);
+        setError(getUserFriendlyError(error));
       }
       setLoading(false);
     }
@@ -241,9 +246,11 @@ const Auth = () => {
         await updateProfile(userCredential.user, {
           displayName: userName
         });
+        console.log('Google profile updated with name:', userName);
       }
 
       // Create recruiter in backend with the provided name
+      console.log('Creating Google user with custom name in backend...');
       const apiResponse = await makeApiCall(
         '/recruiter/postRecruiter', 
         'POST', 
@@ -257,10 +264,41 @@ const Auth = () => {
 
       handleSuccessfulAuth(userCredential, idToken, userName);
       
+      // Clean up
+      setShowNameModal(false);
+      setGoogleUserData(null);
+      
     } catch (error) {
       console.error('Google signup with name error:', error);
-      alert(error.message);
+      setError(getUserFriendlyError(error));
       setLoading(false);
+    }
+  };
+
+  // Get user-friendly error messages
+  const getUserFriendlyError = (error) => {
+    const errorCode = error.code || error.message;
+    
+    if (errorCode.includes('auth/invalid-email')) {
+      return 'Please enter a valid email address.';
+    } else if (errorCode.includes('auth/user-not-found')) {
+      return 'No account found with this email. Please sign up first.';
+    } else if (errorCode.includes('auth/wrong-password')) {
+      return 'Invalid password. Please try again.';
+    } else if (errorCode.includes('auth/email-already-in-use')) {
+      return 'An account with this email already exists. Please login instead.';
+    } else if (errorCode.includes('auth/weak-password')) {
+      return 'Password should be at least 6 characters.';
+    } else if (errorCode.includes('auth/network-request-failed')) {
+      return 'Network error. Please check your internet connection.';
+    } else if (errorCode.includes('auth/popup-blocked')) {
+      return 'Popup was blocked by your browser. Please allow popups for this site.';
+    } else if (errorCode.includes('auth/unauthorized-domain')) {
+      return 'Authentication error: Please refresh the page and try again.';
+    } else if (error.message.includes('HTML instead of JSON') || error.message.includes('Server error')) {
+      return 'Backend server error. Please try again in a few moments.';
+    } else {
+      return error.message || 'An error occurred. Please try again.';
     }
   };
 
@@ -307,10 +345,10 @@ const Auth = () => {
               </button>
               <button
                 onClick={() => handleGoogleSignupWithName(name)}
-                disabled={!name}
+                disabled={!name.trim()}
                 className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Complete Signup
+                {loading ? 'Please wait...' : 'Complete Signup'}
               </button>
             </div>
           </div>
@@ -327,9 +365,16 @@ const Auth = () => {
           </p>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-200 text-sm">
+            {error}
+          </div>
+        )}
+
         {/* Google Sign In Button */}
         <button
-          onClick={() => handleGoogleAuth(!isLogin)}
+          onClick={handleGoogleAuth}
           disabled={loading}
           className="w-full bg-white text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-50 transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:transform-none flex items-center justify-center space-x-3 mb-6"
         >
@@ -353,7 +398,10 @@ const Auth = () => {
         {/* Toggle Switch */}
         <div className="flex bg-white/10 rounded-lg p-1 mb-6">
           <button
-            onClick={() => setIsLogin(true)}
+            onClick={() => {
+              setIsLogin(true);
+              setError('');
+            }}
             className={`flex-1 py-2 rounded-md transition-all ${
               isLogin ? 'bg-blue-600 text-white' : 'text-blue-100'
             }`}
@@ -361,7 +409,10 @@ const Auth = () => {
             Login
           </button>
           <button
-            onClick={() => setIsLogin(false)}
+            onClick={() => {
+              setIsLogin(false);
+              setError('');
+            }}
             className={`flex-1 py-2 rounded-md transition-all ${
               !isLogin ? 'bg-blue-600 text-white' : 'text-blue-100'
             }`}
@@ -404,6 +455,7 @@ const Auth = () => {
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-blue-200 focus:outline-none focus:border-blue-400 focus:bg-white/10 transition-colors"
               required
+              minLength={6}
             />
           </div>
 
@@ -419,7 +471,10 @@ const Auth = () => {
         <p className="text-center text-blue-200 mt-6 text-sm">
           {isLogin ? "Don't have an account? " : "Already have an account? "}
           <button
-            onClick={() => setIsLogin(!isLogin)}
+            onClick={() => {
+              setIsLogin(!isLogin);
+              setError('');
+            }}
             className="text-white font-semibold hover:underline"
           >
             {isLogin ? 'Sign up' : 'Login'}
